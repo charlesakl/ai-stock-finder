@@ -263,20 +263,29 @@ if summary_rows:
             st.dataframe(pd.DataFrame(comparison[:12]), hide_index=True, use_container_width=True)
         else:
             st.write('Financial verification was disabled; rankings use only the preliminary screen.')
-    st.subheader('📈 BUY low / SELL high — historical watch-zone chart')
-    st.caption('Explore where a stock was historically near the lower or upper edge of its recent price range. This is **not** a prediction of when to buy or sell.')
-    chart_ticker = st.selectbox('Chart a finalist', [row['Stock'] for row in summary_rows], key='price_zone_stock')
+else:
+    st.info('No eligible candidates were found. No recommendation is made.')
+# Independent historical chart: available after every scan, even when quality gates reject all finalists.
+st.subheader('📈 BUY low / SELL high — historical watch-zone chart')
+st.caption(
+    'Explore historical BUY/SELL watch zones for screened stocks, independently of the '
+    'financial-health quality gates. Historical zones are not forecasts or trading recommendations.'
+)
+chart_tickers = sorted({item.ticker for item in found})
+if chart_tickers:
+    chart_ticker = st.selectbox('Select a screened stock to chart', chart_tickers, key='price_zone_stock')
     try:
         from price_zones import render_price_chart
         chart_close = load_prices(chart_ticker)
         if chart_close is not None:
             render_price_chart(st, chart_ticker, chart_close, analyzed_horizon)
         else:
-            st.info('Price history unavailable for this chart.')
+            st.info('Price history unavailable for this stock.')
     except Exception as exc:
         st.warning(f'Chart unavailable ({type(exc).__name__}). Research results remain available.')
 else:
-    st.info('No eligible candidates were found. No recommendation is made.')
+    st.info('No stocks passed the preliminary screening filters, so there are no screened stocks to chart.')
+
 if view_mode == 'Simple':
     st.subheader('Your results')
     all_items = [(band, item) for band, item in selected.items() if item is not None]
